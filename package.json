@@ -1,0 +1,21 @@
+{
+  "name": "submission-approval-workflow",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/api & npm run dev --workspace apps/web",
+    "dev:api": "npm run dev --workspace apps/api",
+    "dev:web": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace packages/shared && npm run build --workspace apps/api && npm run build --workspace apps/web",
+    "test": "npm run test --workspace apps/api",
+    "db:migrate": "npm run db:migrate --workspace apps/api",
+    "db:seed": "npm run db:seed --workspace apps/api"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
