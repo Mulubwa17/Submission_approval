@@ -66,6 +66,34 @@ Frontend: `http://localhost:3000`
 
 API: `http://localhost:4000/api`
 
+## Deployment Environment
+
+Keep the browser-facing frontend URL and the API URL separate. `localhost`
+inside a built frontend bundle means the user's own computer, not the deployed
+server.
+
+If the API is running on server IP `44.220.142.122` port `4000` and the
+frontend is running locally during testing:
+
+```env
+BETTER_AUTH_URL="http://44.220.142.122:4000"
+NEXT_PUBLIC_API_URL="http://44.220.142.122:4000"
+FRONTEND_ORIGIN="http://localhost:3000"
+CORS_ORIGINS="http://localhost:3000"
+```
+
+If both apps are on the server and the frontend is served from port `3000`:
+
+```env
+BETTER_AUTH_URL="http://44.220.142.122:4000"
+NEXT_PUBLIC_API_URL="http://44.220.142.122:4000"
+FRONTEND_ORIGIN="http://44.220.142.122:3000"
+CORS_ORIGINS="http://44.220.142.122:3000,http://localhost:3000"
+```
+
+After changing any `NEXT_PUBLIC_*` value, rebuild and restart the frontend so
+Next.js writes the new value into the browser bundle.
+
 Useful individual commands:
 
 ```bash

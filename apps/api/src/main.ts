@@ -2,15 +2,26 @@ import "reflect-metadata";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
+import { getAllowedOrigins, isAllowedOrigin } from "./config/origins";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const frontendOrigin = process.env.FRONTEND_ORIGIN ?? "http://localhost:3000";
+  const allowedOrigins = getAllowedOrigins();
 
   app.setGlobalPrefix("api");
   app.enableCors({
     credentials: true,
-    origin: frontendOrigin
+    origin: (
+      origin: string | undefined,
+      callback: (error: Error | null, allow?: boolean) => void
+    ) => {
+      if (!origin || isAllowedOrigin(origin, allowedOrigins)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS origin is not allowed: ${origin}`), false);
+    }
   });
   app.useGlobalPipes(
     new ValidationPipe({

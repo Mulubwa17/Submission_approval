@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { getAllowedOrigins, getBetterAuthBaseUrl } from "../config/origins";
 
 export type BetterAuthInstance = Awaited<ReturnType<typeof createBetterAuth>>;
 
@@ -14,6 +15,7 @@ export function createBetterAuth(prisma: PrismaClient) {
     import("better-auth/adapters/prisma")
   ]).then(([{ betterAuth }, { prismaAdapter }]) =>
     betterAuth({
+      baseURL: getBetterAuthBaseUrl(),
       basePath: "/api/auth",
       database: prismaAdapter(prisma, {
         provider: "postgresql"
@@ -22,7 +24,7 @@ export function createBetterAuth(prisma: PrismaClient) {
         enabled: true
       },
       secret: process.env.BETTER_AUTH_SECRET,
-      trustedOrigins: [process.env.FRONTEND_ORIGIN ?? "http://localhost:3000"],
+      trustedOrigins: getAllowedOrigins(),
       user: {
         additionalFields: {
           role: {
