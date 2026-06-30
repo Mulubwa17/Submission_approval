@@ -72,16 +72,21 @@ function ReviewerQueue() {
               ))}
             </select>
           </label>
-          <div className="metric-grid">
-            <div className="metric">
-              <strong>{submittedCount}</strong>
-              <p className="muted">submitted</p>
-            </div>
-            <div className="metric">
-              <strong>{inReviewCount}</strong>
-              <p className="muted">under review</p>
-            </div>
-          </div>
+        </div>
+      </div>
+
+      <div className="stats-row" aria-label="Review queue summary">
+        <div className="metric">
+          <strong>{applications.length}</strong>
+          <p className="muted">total applications</p>
+        </div>
+        <div className="metric">
+          <strong>{submittedCount}</strong>
+          <p className="muted">submitted</p>
+        </div>
+        <div className="metric">
+          <strong>{inReviewCount}</strong>
+          <p className="muted">under review</p>
         </div>
       </div>
 

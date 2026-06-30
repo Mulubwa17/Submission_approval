@@ -51,23 +51,28 @@ function ApplicantApplications() {
             review.
           </p>
         </div>
-        <div className="metric-grid">
-          <div className="metric">
-            <strong>{applications.length}</strong>
-            <p className="muted">total requests</p>
-          </div>
-          <div className="metric">
-            <strong>{draftCount}</strong>
-            <p className="muted">needs action</p>
-          </div>
-          <div className="metric">
-            <strong>{approvedCount}</strong>
-            <p className="muted">approved</p>
-          </div>
-          <Link href="/applicant/applications/new" className="button">
-            New application
-          </Link>
+      </div>
+
+      <div className="stats-row" aria-label="Application summary">
+        <div className="metric">
+          <strong>{applications.length}</strong>
+          <p className="muted">total requests</p>
         </div>
+        <div className="metric">
+          <strong>{draftCount}</strong>
+          <p className="muted">needs action</p>
+        </div>
+        <div className="metric">
+          <strong>{approvedCount}</strong>
+          <p className="muted">approved</p>
+        </div>
+      </div>
+
+      <div className="table-heading-row">
+        <h2>Applications</h2>
+        <Link href="/applicant/applications/new" className="button">
+          New submission
+        </Link>
       </div>
 
       <div className="panel table-panel">
