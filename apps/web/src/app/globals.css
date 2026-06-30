@@ -294,6 +294,23 @@ textarea {
   padding: 0;
 }
 
+.table-heading-row {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.table-heading-row h2 {
+  font-size: 1.08rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.table-heading-row .button {
+  flex-shrink: 0;
+}
+
 .table {
   border-collapse: collapse;
   min-width: 720px;
@@ -338,6 +355,12 @@ textarea {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.stats-row {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .metric {
@@ -603,29 +626,33 @@ textarea {
   cursor: pointer;
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: auto;
   padding: 0.9rem;
+  text-align: left;
   transition:
+    background-color 160ms ease,
     border-color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
 }
 
-.account-card:hover {
+.account-card:hover:not(:disabled) {
+  background: white;
   border-color: var(--border-strong);
   box-shadow: 0 14px 34px -30px rgba(21, 27, 40, 0.72);
+  color: var(--ink);
 }
 
 .account-card.selected {
+  background: white;
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(47, 94, 143, 0.1);
 }
 
-.account-card input {
-  accent-color: var(--primary);
-  height: 1rem;
-  margin: 0.15rem 0 0;
-  width: 1rem;
+.account-card:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .account-card-copy {
@@ -641,6 +668,17 @@ textarea {
   color: var(--muted);
   font-size: 0.86rem;
   font-weight: 650;
+}
+
+.account-card-action {
+  align-self: center;
+  background: var(--primary-soft);
+  border-radius: 999px;
+  color: var(--primary-dark);
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0.35rem 0.65rem;
+  white-space: nowrap;
 }
 
 .auth-switch-copy {
@@ -685,6 +723,7 @@ textarea {
   .topbar,
   .account,
   .actions,
+  .table-heading-row,
   .row {
     align-items: flex-start;
     flex-direction: column;
@@ -699,6 +738,7 @@ textarea {
   }
 
   .metric-grid,
+  .stats-row,
   .role-strip,
   .auth-mode-toggle {
     grid-template-columns: 1fr;

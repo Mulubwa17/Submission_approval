@@ -21,6 +21,7 @@ const seededAccounts = [
 ] as const;
 
 type AuthMode = "seeded" | "manual" | "signup";
+type SeededAccount = (typeof seededAccounts)[number];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,13 +36,62 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function signInWithCredentials({
+    next,
+    signInEmail,
+    signInPassword
+  }: {
+    next?: string;
+    signInEmail: string;
+    signInPassword: string;
+  }) {
     setError(null);
     setIsSubmitting(true);
 
     try {
-      if (mode === "signup") {
+      const result = await authClient.signIn.email({
+        email: signInEmail,
+        password: signInPassword
+      });
+
+      if (result.error) {
+        setError(result.error.message ?? "Unable to sign in.");
+        return;
+      }
+
+      const signedInUser = result.data?.user as Partial<SessionUser> | undefined;
+      const fallbackPath =
+        signedInUser?.role === "REVIEWER"
+          ? "/reviewer/applications"
+          : "/applicant/applications";
+
+      router.replace(next ?? fallbackPath);
+    } catch (signInError) {
+      setError(
+        signInError instanceof Error ? signInError.message : "Unable to sign in."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function handleSeededSignIn(account: SeededAccount) {
+    setEmail(account.email);
+    void signInWithCredentials({
+      next: account.next,
+      signInEmail: account.email,
+      signInPassword: "password123"
+    });
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (mode === "signup") {
+      setError(null);
+      setIsSubmitting(true);
+
+      try {
         if (signupPassword !== signupConfirmPassword) {
           setError("Passwords do not match.");
           return;
@@ -59,36 +109,28 @@ export default function LoginPage() {
         }
 
         router.replace("/applicant/applications");
-        return;
+      } catch (signUpError) {
+        setError(
+          signUpError instanceof Error
+            ? signUpError.message
+            : "Unable to create account."
+        );
+      } finally {
+        setIsSubmitting(false);
       }
 
-      const signInEmail = mode === "seeded" ? email : manualEmail.trim();
-      const signInPassword = mode === "seeded" ? "password123" : manualPassword;
-      const account = seededAccounts.find((item) => item.email === signInEmail);
-      const result = await authClient.signIn.email({
-        email: signInEmail,
-        password: signInPassword
-      });
-
-      if (result.error) {
-        setError(result.error.message ?? "Unable to sign in.");
-        return;
-      }
-
-      const signedInUser = result.data?.user as Partial<SessionUser> | undefined;
-      const fallbackPath =
-        signedInUser?.role === "REVIEWER"
-          ? "/reviewer/applications"
-          : "/applicant/applications";
-
-      router.replace(account?.next ?? fallbackPath);
-    } catch (signInError) {
-      setError(
-        signInError instanceof Error ? signInError.message : "Unable to sign in."
-      );
-    } finally {
-      setIsSubmitting(false);
+      return;
     }
+
+    const signInEmail = mode === "seeded" ? email : manualEmail.trim();
+    const signInPassword = mode === "seeded" ? "password123" : manualPassword;
+    const account = seededAccounts.find((item) => item.email === signInEmail);
+
+    await signInWithCredentials({
+      next: account?.next,
+      signInEmail,
+      signInPassword
+    });
   }
 
   return (
@@ -151,25 +193,28 @@ export default function LoginPage() {
           <form className="form" onSubmit={handleSubmit}>
             {mode === "seeded" ? (
               <fieldset className="account-options">
-                <legend>Choose workspace</legend>
+                <legend>Sign in with a seeded workspace</legend>
                 {seededAccounts.map((account) => (
-                  <label
+                  <button
+                    type="button"
                     key={account.email}
                     className={`account-card ${
                       email === account.email ? "selected" : ""
                     }`}
+                    onClick={() => handleSeededSignIn(account)}
+                    disabled={isSubmitting}
                   >
-                    <input
-                      type="checkbox"
-                      checked={email === account.email}
-                      onChange={() => setEmail(account.email)}
-                    />
                     <span className="account-card-copy">
                       <strong>{account.label}</strong>
                       <span>{account.email}</span>
                       <span className="helper">{account.summary}</span>
                     </span>
-                  </label>
+                    <span className="account-card-action">
+                      {isSubmitting && email === account.email
+                        ? "Signing in..."
+                        : "Sign in"}
+                    </span>
+                  </button>
                 ))}
               </fieldset>
             ) : mode === "manual" ? (
@@ -259,15 +304,17 @@ export default function LoginPage() {
 
             {error ? <p className="error">{error}</p> : null}
 
-            <button type="submit" disabled={isSubmitting}>
-              {isSubmitting
-                ? mode === "signup"
-                  ? "Creating account..."
-                  : "Signing in..."
-                : mode === "signup"
-                  ? "Create account"
-                  : "Sign in"}
-            </button>
+            {mode !== "seeded" ? (
+              <button type="submit" disabled={isSubmitting}>
+                {isSubmitting
+                  ? mode === "signup"
+                    ? "Creating account..."
+                    : "Signing in..."
+                  : mode === "signup"
+                    ? "Create account"
+                    : "Sign in"}
+              </button>
+            ) : null}
 
             {mode === "signup" ? (
               <p className="auth-switch-copy">
