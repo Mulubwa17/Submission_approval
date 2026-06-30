@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ApplicationForm } from "@/components/application-form";
+import { LoadingState } from "@/components/loading-state";
 import { SessionGate } from "@/components/session-gate";
 import {
   apiFetch,
@@ -47,9 +48,8 @@ function EditApplication() {
 
   if (isLoading) {
     return (
-      <section className="panel loading-state" aria-label="Loading draft">
-        <div className="loading-line" />
-        <div className="loading-line short" />
+      <section className="panel">
+        <LoadingState label="Loading draft" />
       </section>
     );
   }

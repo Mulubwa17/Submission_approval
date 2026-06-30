@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { AuditTrail } from "@/components/audit-trail";
+import { LoadingState } from "@/components/loading-state";
 import { SessionGate } from "@/components/session-gate";
 import { StatusPill } from "@/components/status-pill";
 import {
@@ -33,27 +35,29 @@ function ReviewerDetail() {
   const canReview =
     application?.status === "SUBMITTED" || application?.status === "UNDER_REVIEW";
 
-  useEffect(() => {
-    apiFetch<ApiApplication>(`/applications/${params.id}`)
+  const loadApplication = useCallback(() => {
+    return apiFetch<ApiApplication>(`/applications/${params.id}`)
       .then(setApplication)
       .catch((loadError: unknown) =>
         setError(loadError instanceof Error ? loadError.message : "Unable to load.")
-      )
-      .finally(() => setIsLoading(false));
+      );
   }, [params.id]);
+
+  useEffect(() => {
+    loadApplication().finally(() => setIsLoading(false));
+  }, [loadApplication]);
 
   async function handleTransition(action: "start-review" | "approve" | "reject" | "return") {
     setError(null);
     setSuccess(null);
 
     try {
-      const updated = await transitionApplication(
+      await transitionApplication(
         `/review/applications/${params.id}/${action}`,
         comment
       );
-      setApplication((current) =>
-        current ? { ...current, status: updated.status } : updated
-      );
+      // Refetch so both the status and the audit trail reflect the change.
+      await loadApplication();
       setSuccess("Status updated.");
       setComment("");
     } catch (transitionError) {
@@ -67,9 +71,8 @@ function ReviewerDetail() {
 
   if (isLoading) {
     return (
-      <section className="panel loading-state" aria-label="Loading application">
-        <div className="loading-line" />
-        <div className="loading-line short" />
+      <section className="panel">
+        <LoadingState label="Loading application" />
       </section>
     );
   }
@@ -161,26 +164,7 @@ function ReviewerDetail() {
         {success ? <p className="success">{success}</p> : null}
       </article>
 
-      <aside className="panel">
-        <h2>Audit trail</h2>
-        {application.auditLogs?.length ? (
-          <div className="timeline">
-            {application.auditLogs.map((entry) => (
-              <div key={entry.id} className="timeline-item">
-                <strong>
-                  {entry.fromStatus ?? "CREATED"} to {entry.toStatus}
-                </strong>
-                <p className="muted">
-                  {entry.actor.name} on {new Date(entry.createdAt).toLocaleString()}
-                </p>
-                {entry.comment ? <p>{entry.comment}</p> : null}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="muted">No transitions recorded yet.</p>
-        )}
-      </aside>
+      <AuditTrail entries={application.auditLogs} />
     </section>
   );
 }

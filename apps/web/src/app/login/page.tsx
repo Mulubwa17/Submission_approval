@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { homePathForRole } from "@submission/shared";
 import { authClient } from "@/lib/auth-client";
 import type { SessionUser } from "@/lib/api";
 
@@ -60,10 +61,9 @@ export default function LoginPage() {
       }
 
       const signedInUser = result.data?.user as Partial<SessionUser> | undefined;
-      const fallbackPath =
-        signedInUser?.role === "REVIEWER"
-          ? "/reviewer/applications"
-          : "/applicant/applications";
+      const fallbackPath = homePathForRole(
+        signedInUser?.role === "REVIEWER" ? "REVIEWER" : "APPLICANT"
+      );
 
       router.replace(next ?? fallbackPath);
     } catch (signInError) {

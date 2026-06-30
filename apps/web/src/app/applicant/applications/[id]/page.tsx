@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
+import { AuditTrail } from "@/components/audit-trail";
+import { LoadingState } from "@/components/loading-state";
 import { SessionGate } from "@/components/session-gate";
 import { StatusPill } from "@/components/status-pill";
 import {
@@ -32,22 +34,24 @@ function ApplicantDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    apiFetch<ApiApplication>(`/applications/${params.id}`)
+  const loadApplication = useCallback(() => {
+    return apiFetch<ApiApplication>(`/applications/${params.id}`)
       .then(setApplication)
       .catch((loadError: unknown) =>
         setError(loadError instanceof Error ? loadError.message : "Unable to load.")
-      )
-      .finally(() => setIsLoading(false));
+      );
   }, [params.id]);
+
+  useEffect(() => {
+    loadApplication().finally(() => setIsLoading(false));
+  }, [loadApplication]);
 
   async function runAction(path: string) {
     setActionError(null);
     try {
-      const updated = await transitionApplication(path);
-      setApplication((current) =>
-        current ? { ...current, status: updated.status } : updated
-      );
+      await transitionApplication(path);
+      // Refetch so both the status and the audit trail reflect the change.
+      await loadApplication();
       router.refresh();
     } catch (transitionError) {
       setActionError(
@@ -60,9 +64,8 @@ function ApplicantDetail() {
 
   if (isLoading) {
     return (
-      <section className="panel loading-state" aria-label="Loading application">
-        <div className="loading-line" />
-        <div className="loading-line short" />
+      <section className="panel">
+        <LoadingState label="Loading application" />
       </section>
     );
   }
@@ -122,26 +125,7 @@ function ApplicantDetail() {
         {actionError ? <p className="error">{actionError}</p> : null}
       </article>
 
-      <aside className="panel">
-        <h2>Audit trail</h2>
-        {application.auditLogs?.length ? (
-          <div className="timeline">
-            {application.auditLogs.map((entry) => (
-              <div key={entry.id} className="timeline-item">
-                <strong>
-                  {entry.fromStatus ?? "CREATED"} to {entry.toStatus}
-                </strong>
-                <p className="muted">
-                  {entry.actor.name} on {new Date(entry.createdAt).toLocaleString()}
-                </p>
-                {entry.comment ? <p>{entry.comment}</p> : null}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="muted">No transitions recorded yet.</p>
-        )}
-      </aside>
+      <AuditTrail entries={application.auditLogs} />
     </section>
   );
 }

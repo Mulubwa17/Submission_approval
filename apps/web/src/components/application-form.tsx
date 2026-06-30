@@ -22,11 +22,16 @@ export function ApplicationForm({
     setIsSaving(true);
 
     const formData = new FormData(event.currentTarget);
+    const amount = String(formData.get("amount") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
     const payload: ApplicationPayload = {
-      amount: String(formData.get("amount") ?? ""),
       category: String(formData.get("category")) as ApplicationPayload["category"],
-      description: String(formData.get("description") ?? ""),
-      title: String(formData.get("title") ?? "")
+      title: String(formData.get("title") ?? "").trim(),
+      // Send optional fields only when populated. An empty string fails the
+      // API's @IsDecimal check (@IsOptional skips null/undefined, not ""),
+      // which would reject every amount-less submission.
+      ...(amount ? { amount } : {}),
+      ...(description ? { description } : {})
     };
 
     try {

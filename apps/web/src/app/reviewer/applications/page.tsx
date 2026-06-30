@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { ApplicationStatus } from "@submission/shared";
 import { applicationStatuses } from "@submission/shared";
 import { AppShell } from "@/components/app-shell";
+import { LoadingState } from "@/components/loading-state";
 import { SessionGate } from "@/components/session-gate";
 import { StatusPill } from "@/components/status-pill";
 import { apiFetch, type ApiApplication } from "@/lib/api";
@@ -92,11 +93,7 @@ function ReviewerQueue() {
 
       <div className="panel table-panel">
         {isLoading ? (
-          <div className="loading-state" aria-label="Loading queue">
-            <div className="loading-line" />
-            <div className="loading-line short" />
-            <div className="loading-line" />
-          </div>
+          <LoadingState label="Loading queue" lines={3} />
         ) : null}
         {error ? <p className="error">{error}</p> : null}
         {!isLoading && !error && applications.length === 0 ? (

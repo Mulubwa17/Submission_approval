@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException
@@ -167,10 +168,21 @@ export class ApplicationsService {
         to: toStatus
       });
 
-      const updated = await tx.application.update({
+      // Guard against concurrent transitions: only update if the row is still
+      // in the status we validated against. A racing actor that already moved
+      // it leaves zero rows matched, so we surface a conflict instead of
+      // silently recording a second transition from a stale state.
+      const result = await tx.application.updateMany({
         data: { status: toStatus },
-        where: { id }
+        where: { id, status: application.status }
       });
+
+      if (result.count === 0) {
+        throw new ConflictException({
+          code: "CONCURRENT_UPDATE",
+          message: "This application was updated by someone else. Reload and try again."
+        });
+      }
 
       await tx.applicationAuditLog.create({
         data: {
@@ -182,7 +194,7 @@ export class ApplicationsService {
         }
       });
 
-      return updated;
+      return tx.application.findUniqueOrThrow({ where: { id } });
     });
   }
 }

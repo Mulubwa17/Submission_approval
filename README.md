@@ -108,6 +108,9 @@ Key design decisions:
 - Status transition logic is centralized in `WorkflowService` instead of being duplicated across controllers.
 - Audit logs are written in the same database transaction as the status update, so the application state and audit trail stay consistent.
 - Better Auth owns login/session mechanics, while NestJS guards and services still enforce role and ownership checks on every workflow mutation.
+- A single shared Prisma client backs both the application services and Better Auth (via a `createBetterAuth(prisma)` factory and an injectable `BetterAuthService`), so the app uses one connection pool instead of several.
+- Status transitions use an optimistic concurrency guard: the update only applies while the application is still in the expected status, so two reviewers acting at the same time cannot both record a transition — the loser receives a `409 CONCURRENT_UPDATE`.
+- Request inputs are validated at the edge. The reviewer status filter must be a known `ApplicationStatus`, and optional fields are normalized, so malformed input returns `400` rather than surfacing a database error as a `500`.
 - Returned applications are reopened to `DRAFT` before editing. This preserves the rule that applicants only edit drafts while still supporting a returned-for-changes loop.
 
 ## Workflow Rules
@@ -118,6 +121,7 @@ Key design decisions:
 - Reviewers can move `SUBMITTED` or `UNDER_REVIEW` to review outcomes.
 - Rejecting or returning requires a comment.
 - Returned applications must be reopened as `DRAFT` before editing, preserving the rule that applicants only edit drafts.
+- Concurrent transitions are rejected: if the application already moved to another status, the API returns `409 CONCURRENT_UPDATE` instead of double-recording the change.
 - Every transition creates an audit log entry.
 
 The transition rules live in `apps/api/src/workflow/workflow.service.ts` and are covered by unit tests.
@@ -138,7 +142,7 @@ Applicant endpoints:
 
 Reviewer endpoints:
 
-- `GET /api/review/applications?status=SUBMITTED`
+- `GET /api/review/applications?status=SUBMITTED` (the `status` filter is validated; an unknown value returns `400`)
 - `POST /api/review/applications/:id/start-review`
 - `POST /api/review/applications/:id/approve`
 - `POST /api/review/applications/:id/reject`
@@ -207,6 +211,7 @@ How Claude was used:
 - Code cleanup suggestions.
 - Test coverage suggestions for legal and illegal transitions.
 - Review of authorization paths, especially making sure Applicant users cannot perform Reviewer actions by calling the API directly.
+- Edge-case, regression, and architecture review of the web and API apps, with fixes for input validation, concurrent-transition handling, a shared Prisma client, and frontend audit-trail refresh and DRY cleanups.
 
 What I verified myself:
 

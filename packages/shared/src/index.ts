@@ -1,6 +1,12 @@
 export const roles = ["APPLICANT", "REVIEWER"] as const;
 export type Role = (typeof roles)[number];
 
+export function homePathForRole(role: Role): string {
+  return role === "REVIEWER"
+    ? "/reviewer/applications"
+    : "/applicant/applications";
+}
+
 export const applicationStatuses = [
   "DRAFT",
   "SUBMITTED",

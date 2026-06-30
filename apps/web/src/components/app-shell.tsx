@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode } from "react";
+import { homePathForRole } from "@submission/shared";
 import { authClient } from "@/lib/auth-client";
 import type { SessionUser } from "@/lib/api";
 
@@ -14,8 +15,7 @@ export function AppShell({
   user: SessionUser;
 }) {
   const router = useRouter();
-  const home =
-    user.role === "REVIEWER" ? "/reviewer/applications" : "/applicant/applications";
+  const home = homePathForRole(user.role);
 
   async function signOut() {
     await authClient.signOut();

@@ -1,4 +1,4 @@
-import { ApplicationCategory } from "@prisma/client";
+import { ApplicationCategory, ApplicationStatus } from "@prisma/client";
 import {
   IsDecimal,
   IsEnum,
@@ -34,4 +34,10 @@ export class TransitionCommentDto {
   @IsString()
   @MaxLength(1000)
   comment?: string;
+}
+
+export class ListQueueQueryDto {
+  @IsOptional()
+  @IsEnum(ApplicationStatus)
+  status?: ApplicationStatus;
 }

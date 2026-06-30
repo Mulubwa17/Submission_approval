@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
-import type { Role } from "@submission/shared";
+import { homePathForRole, type Role } from "@submission/shared";
+import { LoadingState } from "@/components/loading-state";
 import { authClient } from "@/lib/auth-client";
 import type { SessionUser } from "@/lib/api";
 
@@ -23,12 +25,16 @@ export function SessionGate({
     }
   }, [isPending, router, user]);
 
+  async function signOut() {
+    await authClient.signOut();
+    router.replace("/login");
+  }
+
   if (isPending) {
     return (
       <main className="shell">
-        <section className="panel loading-state" aria-label="Loading session">
-          <div className="loading-line" />
-          <div className="loading-line short" />
+        <section className="panel">
+          <LoadingState label="Loading session" />
         </section>
       </main>
     );
@@ -44,9 +50,17 @@ export function SessionGate({
         <section className="panel">
           <h1>Wrong workspace</h1>
           <p>
-            Signed in as {user.role.toLowerCase()}. Use the correct seeded
-            account for this area.
+            Signed in as {user.role.toLowerCase()}. Open your own workspace or
+            sign in with a different account.
           </p>
+          <div className="actions">
+            <Link href={homePathForRole(user.role)} className="button">
+              Go to my workspace
+            </Link>
+            <button type="button" className="ghost" onClick={signOut}>
+              Sign out
+            </button>
+          </div>
         </section>
       </main>
     );

@@ -1,7 +1,8 @@
 import { PrismaClient, Role } from "@prisma/client";
-import { getBetterAuth } from "../src/auth/better-auth";
+import { createBetterAuth } from "../src/auth/better-auth";
 
 const prisma = new PrismaClient();
+const authPromise = createBetterAuth(prisma);
 
 async function ensureUser(input: {
   email: string;
@@ -12,7 +13,7 @@ async function ensureUser(input: {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
 
   if (!existing) {
-    const auth = await getBetterAuth();
+    const auth = await authPromise;
     await auth.api.signUpEmail({
       body: {
         email: input.email,

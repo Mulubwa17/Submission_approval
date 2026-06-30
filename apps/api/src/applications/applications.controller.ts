@@ -10,12 +10,13 @@ import {
   Req,
   UseGuards
 } from "@nestjs/common";
-import { ApplicationStatus, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { BetterAuthGuard } from "../auth/better-auth.guard";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
 import { ApplicationsService } from "./applications.service";
 import {
   CreateApplicationDto,
+  ListQueueQueryDto,
   TransitionCommentDto,
   UpdateApplicationDto
 } from "./dto";
@@ -65,10 +66,10 @@ export class ApplicationsController {
   @Get("review/applications")
   listQueue(
     @Req() request: AuthenticatedRequest,
-    @Query("status") status?: ApplicationStatus
+    @Query() query: ListQueueQueryDto
   ) {
     this.assertReviewer(request.user.role);
-    return this.applications.listQueue(status);
+    return this.applications.listQueue(query.status);
   }
 
   @Post("review/applications/:id/start-review")
