@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import { homePathForRole } from "@submission/shared";
 import { authClient } from "@/lib/auth-client";
 import type { SessionUser } from "@/lib/api";
@@ -25,7 +24,6 @@ type AuthMode = "seeded" | "manual" | "signup";
 type SeededAccount = (typeof seededAccounts)[number];
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState<string>(seededAccounts[0].email);
   const [mode, setMode] = useState<AuthMode>("seeded");
   const [manualEmail, setManualEmail] = useState("");
@@ -65,7 +63,14 @@ export default function LoginPage() {
         signedInUser?.role === "REVIEWER" ? "REVIEWER" : "APPLICANT"
       );
 
-      router.replace(next ?? fallbackPath);
+      // Use a full-page navigation rather than a client-side router.replace.
+      // The destination is gated by authClient.useSession(); on a soft
+      // navigation its session store is still cold and reports
+      // { isPending: false, user: undefined } on first render, which bounces
+      // the user straight back to /login (the "click twice" symptom). A full
+      // load remounts the gate cold so it fetches the session with the
+      // freshly set cookie before deciding.
+      window.location.assign(next ?? fallbackPath);
     } catch (signInError) {
       setError(
         signInError instanceof Error ? signInError.message : "Unable to sign in."
@@ -108,7 +113,7 @@ export default function LoginPage() {
           return;
         }
 
-        router.replace("/applicant/applications");
+        window.location.assign("/applicant/applications");
       } catch (signUpError) {
         setError(
           signUpError instanceof Error
