@@ -1,14 +1,20 @@
 services:
   postgres:
     image: postgres:16-alpine
+    # Bind ONLY to localhost — the DB is no longer reachable from the public
+    # internet, so the bots that wiped it nightly can't connect. The app runs
+    # on the same host and still reaches it via localhost:5432.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      # No default password. Set POSTGRES_PASSWORD in a .env file next to this
+      # compose file (e.g. echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)" >> .env)
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       POSTGRES_DB: submission_workflow
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d submission_workflow"]
       interval: 5s
